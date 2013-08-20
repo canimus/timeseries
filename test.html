@@ -14,8 +14,9 @@
   <script>
     // Handling transaction file
     var ts = null;
-    d3.tsv("transactions.tsv", function(err,data) {
-      ts = new TimeSeriesGraph(data, "graph");    
+    d3.tsv("transactions2.tsv", function(err,data) {
+      ts = new TimeSeriesGraph(data, "graph");
+      TimeSeriesGraph.graph_data(ts.data, 10);
     });
   </script>
 </body>

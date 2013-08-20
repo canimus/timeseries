@@ -8,7 +8,7 @@ class window.TimeSeriesGraph
   color = d3.scale.category10()
   x = d3.time.scale()
   y = d3.scale.linear()
-  line = d3.svg.line()
+  @line = d3.svg.line()
 
   # Stats analysis of data series
   @ts_stats: (d, accessor) ->
@@ -65,8 +65,8 @@ class window.TimeSeriesGraph
     # Names for all transactions
     tx_names = d3.set(inner_data.map (d) -> d.name).values()
 
-    x.domain(d3.extent(inner_data.map (d) -> d["timestamp"])).range([0,width])    
-    line.x((d) -> d.x ).y((d) -> d.y ).interpolate("monotone")
+    x.domain(d3.extent(inner_data.map (d) -> d["timestamp"])).range([10,width-10])    
+    @line.x((d) -> d.x ).y((d) -> d.y ).interpolate("monotone")
 
     # Create aggregation per minute
     
@@ -78,16 +78,16 @@ class window.TimeSeriesGraph
     #context = canvas.getContext("2d")
     #context.lineWidth = .3
 
-    svg = d3.select("body").append("svg")
-    svg.attr("width", width).attr("height", height)
-    svg.selectAll("path").data(data_by_name[3]).enter()
-    .append("path")
-    .attr("d", (d) ->
-      y.domain([0, d3.max(inner_data.map (d) -> d["response"])]).range([height, 0])
-      line(TimeSeriesGraph.aggregate(d.values.raw, range_agg).map(TimeSeriesGraph.pointify))
-    ).style("stroke", (d,i) ->
-      color(i)
-    ).style("stroke-width", "1px").style("fill", "none")
+    data_by_name.forEach (serie, serie_idx) ->
+      svg = d3.select("#graph").append("svg")
+      svg.attr("width", width).attr("height", height)
+      svg.append("text").attr("x", width).attr("y", 10).text( (d) -> serie.key)
+      svg.append("path").datum(serie)      
+      .attr("d", (d) ->
+        inner_serie = TimeSeriesGraph.aggregate(d.values.raw, range_agg)
+        y.domain([0, d3.max(inner_serie.map (d) -> d["response"])]).range([height, 10])
+        TimeSeriesGraph.line(inner_serie.map(TimeSeriesGraph.pointify))
+      ).attr("class", "mosaic")
 
     data_by_name
 
