@@ -27,6 +27,13 @@ path.mosaic {
   shape-rendering: geometricPrecision;
 }
 
+path.loess {
+  fill: none;
+  stroke: #ff2b2b;
+  stroke-width: 1px;
+  shape-rendering: geometricPrecision; 
+}
+
 text {
   font-family: Menlo;
   font-size: 9px;

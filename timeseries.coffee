@@ -1,5 +1,5 @@
 class window.TimeSeriesGraph
-  constructor: (@data, @container, @width, @height) ->
+  constructor: (@data) ->
 
   width = 300
   height = 100
@@ -22,14 +22,14 @@ class window.TimeSeriesGraph
       raw: d
     }
 
-  @ts_roll: (arr) ->
-    @ts_stats(arr.map( (d) -> {timestamp:d.timestamp, response:d.response} ), d3.functor( (d) -> d.response ))
+  # Rollup function used to retrive statistics from time series array
+  @ts_roll: (arr) -> @ts_stats(arr.map( (d) -> {timestamp:d.timestamp, response:d.response} ), d3.functor( (d) -> d.response ))
     
-
-  # Convert timeseries object into point coordinates
-  @pointify: (d) -> 
+  # Convert timeseries object into point coordinates  
+  @pointify: (d) ->     
     { x: x(d["timestamp"]), y: y(d["response"]) }
 
+  # Produce a subset of array with aggregation of n(range) elements
   @aggregate: (d, range) ->
     index_range = 0
     group_seconds = d3.nest().key((t) -> format_sec(t.timestamp)).rollup((t) -> d3.mean(t.map( (u) -> u.response ))).entries(d)
@@ -78,17 +78,67 @@ class window.TimeSeriesGraph
     #context = canvas.getContext("2d")
     #context.lineWidth = .3
 
+    # Loess regression
+    loess = science.stats.loess().bandwidth(.5)
+
     data_by_name.forEach (serie, serie_idx) ->
+      
       svg = d3.select("#graph").append("svg")
       svg.attr("width", width).attr("height", height)
       svg.append("text").attr("x", width).attr("y", 10).text( (d) -> serie.key)
+
       svg.append("path").datum(serie)      
       .attr("d", (d) ->
         inner_serie = TimeSeriesGraph.aggregate(d.values.raw, range_agg)
         y.domain([0, d3.max(inner_serie.map (d) -> d["response"])]).range([height, 10])
-        TimeSeriesGraph.line(inner_serie.map(TimeSeriesGraph.pointify))
+        process_array = inner_serie.map(TimeSeriesGraph.pointify)
+        TimeSeriesGraph.line(process_array)
       ).attr("class", "mosaic")
+
+      # Print pattern line
+      svg.append("path").datum(serie)      
+      .attr("d", (d) ->
+        inner_serie = TimeSeriesGraph.aggregate(d.values.raw, range_agg)
+        y.domain([0, d3.max(inner_serie.map (d) -> d["response"])]).range([height, 10])
+        process_array = inner_serie.map(TimeSeriesGraph.pointify)
+        x_values = process_array.map( (d) -> d.x )
+        y_values = process_array.map( (d) -> d.y )
+        loess_array = d3.zip(x_values, loess(x_values, y_values))
+        loess_pointify = loess_array.map (p) -> {x:p[0], y:p[1]}
+        pattern_loess = TimeSeriesGraph.pattern_string(loess_pointify, 6, d3.functor( (p) -> p.y ))
+        
+        TimeSeriesGraph.line(loess_pointify)
+      ).attr("class", "loess")
+      
 
     data_by_name
 
+  @loessify_data = (d) ->
+
+
+  # Obtain a string pattern from time series data in x number of splits
+  @pattern_string: (data_arr, splits, data_accessor) ->
+    # DNA of graph
+    pattern_dna = ["a", "b", "c", "d", "e", "f"]
+    data_size = data_arr.length
+    slice = Math.ceil(data_size/splits)
+    index_position = 0
+    # Percentile Calculation
+    #nst = d3.nest().key( (d) -> Math.floor(index_position++/slice)).rollup( (d) -> d3.quantile(d.map(data_accessor).sort(d3.ascending), .75 ) ).entries(data_arr)    
+
+    # Mean Calculation
+    nst = d3.nest().key( (d) -> Math.floor(index_position++/slice)).rollup( (d) -> d3.median(d.map(data_accessor))).entries(data_arr)    
+    
+
+    # Loess Regresion
+    science.stats.loess().bandwidth(.2)
+
+    
+    pattern_levels = d3.scale.linear().domain([height,10]).rangeRound([0,5])
+    dna_code = ""
+    y.domain([0, d3.max(nst.map (d) -> d.values)]).range([height, 10])
+
+    nst.forEach (d) ->      
+      dna_code += pattern_dna[pattern_levels(y(d.values))]      
+    dna_code
 
