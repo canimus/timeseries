@@ -1,22 +1,35 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <head>
-  <title>Line Chart - Canvas and D3</title>
+  <title>Time Series Analyzer</title>
   <link rel="stylesheet" type="text/css" href="css/style.min.css">
   <script src="d3.v3.min.js"></script>  
   <script src="science.v1.min.js"></script>
   <script src="crossfilter.min.js"></script>
+  <script src="underscore.min.js"></script>
+  <script src="dtw.min.js"></script>
 </head>
 <body>
-  <h1>Time Series Example : 1</h1>
-  <div id="graph"></div>
+  <h1>Time Series Analysis</h1>
+  <div class="controls">
+    <label for="points">Aggregation (sec):</label>    
+    <input type="number" name="points" min="0" max="120" step="5" value="10">
+  </div>
+  <div id="graph"></div>  
   <script src="timeseries.min.js"></script>
   <script>
     // Handling transaction file
     var ts = null;
-    d3.tsv("transactions2.tsv", function(err,data) {
-      ts = new TimeSeriesGraph(data);
-      TimeSeriesGraph.graph_data(ts.data, 10);
+    d3.tsv("transactions.tsv", function(err,data) {
+      //ts = new TimeSeriesGraph(data);
+      //TimeSeriesGraph.graph_data(ts.data, 10);
+      ts = new TimeSeriesAnalyzer(data)
+      //ts.graph("graph", "bp01s02_Accounts", +d3.select("input[name=points]").property("value"), true)
     });
+
+    d3.select("input[name=points]").on("change", function(d) {
+      ts.graph("graph", "bp01s02_Accounts", this.value, true)
+    });
+
   </script>
 </body>
