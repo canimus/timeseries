@@ -15,15 +15,27 @@
     <label for="points">Aggregation (sec):</label>    
     <input type="number" name="points" min="0" max="120" step="5" value="10">
   </div>
-  <div id="graph"></div>  
+  <div id="graph_1"></div>  
+  <div id="graph_2"></div>  
+  <div id="graph_3"></div>  
+  <div id="graph_4"></div>  
+  <div id="graph_5"></div>  
+  <div id="graph_6"></div>  
+  <div id="graph_7"></div>  
+  <div id="graph_8"></div>  
+  <div id="graph_9"></div>  
+  <div id="graph_10"></div>  
   <script src="timeseries.min.js"></script>
   <script>
     // Handling transaction file
     var ts = null;
-    d3.tsv("transactions.tsv", function(err,data) {
+    d3.tsv("transactions2.tsv", function(err,data) {
       //ts = new TimeSeriesGraph(data);
       //TimeSeriesGraph.graph_data(ts.data, 10);
-      ts = new TimeSeriesAnalyzer(data)
+      ts = new TimeSeriesAnalyzer(data);
+      ts.names().forEach(function(d,idx){
+        ts.graph("graph_"+idx, d, + d3.select("input[name=points]").property("value"), true);
+      });
       //ts.graph("graph", "bp01s02_Accounts", +d3.select("input[name=points]").property("value"), true)
     });
 
